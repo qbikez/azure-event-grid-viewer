@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc;
 using viewer.Hubs;
 using viewer.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace viewer.Controllers
 {
@@ -29,14 +30,16 @@ namespace viewer.Controllers
                "Notification";
 
         private readonly IHubContext<GridEventsHub> _hubContext;
+        private readonly IConfiguration config;
 
         #endregion
 
         #region Constructors
 
-        public UpdatesController(IHubContext<GridEventsHub> gridEventsHubContext)
+        public UpdatesController(IHubContext<GridEventsHub> gridEventsHubContext, IConfiguration config)
         {
             this._hubContext = gridEventsHubContext;
+            this.config = config;
         }
 
         #endregion
@@ -61,6 +64,11 @@ namespace viewer.Controllers
         [HttpPost]
         public async Task<IActionResult> Post()
         {
+            var code = Request.Query["code"];
+            if (config["Authorization:ApiKey"] != null && code != config["Authorization:ApiKey"]) {
+                return Unauthorized();
+            } 
+            
             using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
             {
                 var jsonContent = await reader.ReadToEndAsync();
